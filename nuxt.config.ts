@@ -28,5 +28,7 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     anthropicApiKey: process.env.ANTHROPIC_API_KEY || '',
+    appPassword: process.env.APP_PASSWORD || '',
+    sessionSecret: process.env.SESSION_SECRET || 'sellsnap-secret-change-me',
   },
 })

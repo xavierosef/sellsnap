@@ -24,6 +24,11 @@ const toastMessage = ref('')
 const toastVisible = ref(false)
 let toastTimer: ReturnType<typeof setTimeout> | null = null
 
+async function logout() {
+  await $fetch('/api/auth/logout', { method: 'POST' })
+  navigateTo('/login')
+}
+
 function showToast(msg: string) {
   toastMessage.value = msg
   toastVisible.value = true
@@ -47,6 +52,9 @@ function showToast(msg: string) {
         <h1 class="logo-text">SellSnap</h1>
         <p class="logo-sub">Annonce en un snap</p>
       </div>
+      <button class="logout-btn" title="Déconnexion" @click="logout">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </button>
     </header>
 
     <!-- Main -->
@@ -151,6 +159,23 @@ function showToast(msg: string) {
   align-items: center;
   gap: 14px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+.logout-btn {
+  margin-left: auto;
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  color: #555;
+  cursor: pointer;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.logout-btn:hover {
+  color: #ff8080;
+  border-color: rgba(255, 80, 80, 0.2);
 }
 .logo-icon {
   width: 40px;
