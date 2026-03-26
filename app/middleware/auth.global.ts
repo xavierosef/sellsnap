@@ -1,9 +1,10 @@
 export default defineNuxtRouteMiddleware(async (to) => {
-  // Don't check auth on login page
   if (to.path === '/login') return
 
   try {
-    await $fetch('/api/auth/check')
+    // Forward browser cookies during SSR (server-side rendering on reload)
+    const headers = import.meta.server ? useRequestHeaders(['cookie']) : {}
+    await $fetch('/api/auth/check', { headers })
   } catch {
     return navigateTo('/login')
   }
