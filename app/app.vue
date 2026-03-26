@@ -1,0 +1,27 @@
+<template>
+  <NuxtPage />
+</template>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background: #0a0a14;
+}
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+::placeholder {
+  color: #444;
+}
+</style>
