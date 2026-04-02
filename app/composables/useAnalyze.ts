@@ -1,4 +1,4 @@
-import { fileToBase64, fileToPreview, getMediaType, isValidImageFile, getFileSizeError } from '~/utils/image'
+import { fileToBase64, fileToPreview, getMediaType, isValidImageFile, getFileSizeError, generateThumbnail } from '~/utils/image'
 
 export type Step = 'upload' | 'analyzing' | 'result'
 
@@ -40,6 +40,7 @@ export function useAnalyze() {
   const aiStats = ref<AiStats | null>(null)
   const market = ref<MarketData | null>(null)
   const isRefining = ref(false)
+  const savedListingId = ref<string | null>(null)
 
   let timerInterval: ReturnType<typeof setInterval> | null = null
   let abortController: AbortController | null = null
@@ -162,6 +163,46 @@ export function useAnalyze() {
       }
       market.value = response.market
       step.value = 'result'
+
+      // Auto-save to database (only on first generation, not refinement)
+      if (!wasOnResult) {
+        try {
+          const thumbnail = images.value.length > 0
+            ? await generateThumbnail(images.value[0])
+            : null
+
+          const saved = await $fetch<{ listing: { id: string } }>('/api/listings', {
+            method: 'POST',
+            body: {
+              title: title.value,
+              description: description.value,
+              price: price.value,
+              category: category.value,
+              thumbnail,
+              context: context.value,
+              marketData: market.value,
+              aiStats: aiStats.value,
+            },
+          })
+          savedListingId.value = saved.listing.id
+        } catch (e) {
+          console.warn('Auto-save failed:', e)
+        }
+      } else if (savedListingId.value) {
+        // Update existing listing on refinement
+        try {
+          await $fetch(`/api/listings/${savedListingId.value}`, {
+            method: 'PATCH',
+            body: {
+              title: title.value,
+              description: description.value,
+              price: price.value,
+            },
+          })
+        } catch (e) {
+          console.warn('Auto-update failed:', e)
+        }
+      }
     } catch (err: any) {
       console.error(err)
 
@@ -204,6 +245,7 @@ export function useAnalyze() {
     isRefining.value = false
     aiStats.value = null
     market.value = null
+    savedListingId.value = null
   }
 
   // Cleanup on unmount
@@ -229,6 +271,7 @@ export function useAnalyze() {
     isRefining,
     aiStats,
     market,
+    savedListingId,
     addImages,
     removeImage,
     cancelAnalysis,
