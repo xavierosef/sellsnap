@@ -42,6 +42,12 @@ export function useAnalyze() {
   const isRefining = ref(false)
   const savedListingId = ref<string | null>(null)
 
+  // Quick estimate
+  const estimatePrice = ref('')
+  const estimateReason = ref('')
+  const estimateCategory = ref('')
+  const isEstimating = ref(false)
+
   let timerInterval: ReturnType<typeof setInterval> | null = null
   let abortController: AbortController | null = null
 
@@ -258,6 +264,43 @@ export function useAnalyze() {
     }
   })
 
+  async function estimate() {
+    if (images.value.length === 0) return
+    isEstimating.value = true
+    estimatePrice.value = ''
+    estimateReason.value = ''
+
+    try {
+      const imageData = await Promise.all(
+        images.value.map(async (file) => ({
+          base64: await fileToBase64(file),
+          mediaType: getMediaType(file),
+        }))
+      )
+
+      const result = await $fetch<{ price: string; reason: string; category: string }>('/api/estimate', {
+        method: 'POST',
+        body: { images: imageData },
+        timeout: 35000,
+      })
+
+      estimatePrice.value = result.price
+      estimateReason.value = result.reason
+      estimateCategory.value = result.category
+    } catch (err: any) {
+      estimatePrice.value = '?'
+      estimateReason.value = 'Estimation impossible'
+    } finally {
+      isEstimating.value = false
+    }
+  }
+
+  function clearEstimate() {
+    estimatePrice.value = ''
+    estimateReason.value = ''
+    estimateCategory.value = ''
+  }
+
   function reset() {
     // Revoke all blob URLs
     for (const p of previews.value) {
@@ -277,6 +320,7 @@ export function useAnalyze() {
     aiStats.value = null
     market.value = null
     savedListingId.value = null
+    clearEstimate()
     if (saveTimer) clearTimeout(saveTimer)
   }
 
@@ -306,10 +350,16 @@ export function useAnalyze() {
     market,
     savedListingId,
     lastSavedAt,
+    estimatePrice,
+    estimateReason,
+    estimateCategory,
+    isEstimating,
     addImages,
     removeImage,
     cancelAnalysis,
     analyze,
+    estimate,
+    clearEstimate,
     reset,
   }
 }

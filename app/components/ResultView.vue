@@ -36,6 +36,19 @@ const fullAnnonce = computed(
   () => `${props.title}\n\n${props.description}\n\nPrix : ${props.price} €`
 )
 
+async function shareAnnonce() {
+  const text = fullAnnonce.value
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: props.title, text })
+      return
+    } catch {
+      // User cancelled or share failed, fallback to copy
+    }
+  }
+  await copyText(text, 'Annonce')
+}
+
 function formatDuration(ms: number): string {
   const s = Math.round(ms / 1000)
   return s < 60 ? `${s}s` : `${Math.floor(s / 60)}m${String(s % 60).padStart(2, '0')}`
@@ -170,6 +183,14 @@ function submitRefine() {
         <CopyButton label="Description" @copy="copyText(description, 'Description')" />
         <CopyButton label="Prix" @copy="copyText(`${price} €`, 'Prix')" />
         <CopyButton label="Annonce complète" @copy="copyText(fullAnnonce, 'Annonce')" />
+        <button class="share-btn" @click="shareAnnonce">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" />
+            <polyline points="16 6 12 2 8 6" />
+            <line x1="12" y1="2" x2="12" y2="15" />
+          </svg>
+          Partager
+        </button>
       </div>
     </div>
 
@@ -422,6 +443,26 @@ function submitRefine() {
 }
 .refine-btn.active:hover {
   background: rgba(108, 99, 255, 0.3);
+}
+
+.share-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(108, 99, 255, 0.2);
+  background: rgba(108, 99, 255, 0.08);
+  color: #a8a4ff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: all 0.2s;
+}
+.share-btn:hover {
+  background: rgba(108, 99, 255, 0.15);
+  border-color: rgba(108, 99, 255, 0.3);
 }
 
 .divider {

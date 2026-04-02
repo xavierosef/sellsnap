@@ -76,6 +76,20 @@ async function deleteListing() {
   }
 }
 
+async function shareAnnonce() {
+  if (!listing.value) return
+  const text = fullAnnonce.value
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: listing.value.title, text })
+      return
+    } catch {
+      // Fallback to copy
+    }
+  }
+  await copyText(text, 'Annonce')
+}
+
 function showToast(msg: string) {
   toastMessage.value = msg
   toastVisible.value = true
@@ -173,6 +187,14 @@ onUnmounted(() => {
             <CopyButton label="Description" @copy="copyText(listing.description, 'Description')" />
             <CopyButton label="Prix" @copy="copyText(`${listing.price} EUR`, 'Prix')" />
             <CopyButton label="Annonce complete" @copy="copyText(fullAnnonce, 'Annonce')" />
+            <button class="share-btn" @click="shareAnnonce">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" />
+                <polyline points="16 6 12 2 8 6" />
+                <line x1="12" y1="2" x2="12" y2="15" />
+              </svg>
+              Partager
+            </button>
           </div>
         </div>
 
@@ -326,6 +348,23 @@ onUnmounted(() => {
 .price-row { display: flex; align-items: center; gap: 8px; }
 .price-input { width: 120px; font-size: 28px; font-weight: 800; font-family: 'Space Mono', monospace; color: #6c63ff; text-align: center; }
 .price-euro { font-size: 24px; font-weight: 700; color: #6c63ff; font-family: 'Space Mono', monospace; }
+
+.share-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(108, 99, 255, 0.2);
+  background: rgba(108, 99, 255, 0.08);
+  color: #a8a4ff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: all 0.2s;
+}
+.share-btn:hover { background: rgba(108, 99, 255, 0.15); border-color: rgba(108, 99, 255, 0.3); }
 
 .divider { height: 1px; background: rgba(255, 255, 255, 0.06); margin: 20px 0; }
 

@@ -14,10 +14,15 @@ const {
   aiStats,
   market,
   lastSavedAt,
+  estimatePrice,
+  estimateReason,
+  isEstimating,
   addImages,
   removeImage,
   cancelAnalysis,
   analyze,
+  estimate,
+  clearEstimate,
   reset,
 } = useAnalyze()
 
@@ -103,6 +108,30 @@ function showToast(msg: string) {
         >
           &#10024; Générer l'annonce
         </button>
+
+        <!-- Quick estimate -->
+        <div v-if="images.length > 0" class="estimate-section">
+          <button
+            v-if="!estimatePrice && !isEstimating"
+            class="estimate-link"
+            @click="estimate()"
+          >
+            &#128176; Combien ça vaut ?
+          </button>
+
+          <div v-else-if="isEstimating" class="estimate-loading">
+            <span class="estimate-spinner" />
+            <span>Estimation...</span>
+          </div>
+
+          <div v-else-if="estimatePrice" class="estimate-result">
+            <div class="estimate-header">
+              <span class="estimate-price">~{{ estimatePrice }} &euro;</span>
+              <button class="estimate-close" @click="clearEstimate()">&times;</button>
+            </div>
+            <p class="estimate-reason">{{ estimateReason }}</p>
+          </div>
+        </div>
       </div>
 
       <!-- ANALYZING -->
@@ -310,6 +339,84 @@ function showToast(msg: string) {
   transform: translateY(-1px);
 }
 
+.estimate-section {
+  text-align: center;
+  margin-top: 16px;
+}
+.estimate-link {
+  background: none;
+  border: none;
+  color: #555;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: color 0.2s;
+  padding: 8px 0;
+}
+.estimate-link:hover {
+  color: #a8a4ff;
+}
+.estimate-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #666;
+  font-size: 13px;
+  padding: 8px 0;
+}
+.estimate-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(108, 99, 255, 0.2);
+  border-top-color: #6c63ff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+.estimate-result {
+  margin-top: 4px;
+  padding: 16px 20px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(108, 99, 255, 0.15);
+  animation: fadeIn 0.3s ease;
+}
+.estimate-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+.estimate-price {
+  font-size: 28px;
+  font-weight: 800;
+  font-family: 'Space Mono', monospace;
+  color: #6c63ff;
+}
+.estimate-close {
+  background: none;
+  border: none;
+  color: #555;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+.estimate-close:hover {
+  color: #ff8080;
+  background: rgba(255, 80, 80, 0.1);
+}
+.estimate-reason {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: #777;
+  text-align: center;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
 @keyframes fadeIn {
   from {
     opacity: 0;
