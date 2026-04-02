@@ -10,7 +10,7 @@ export default defineEventHandler(async (event) => {
 
   try {
     const targetUrl = `https://www.leboncoin.fr/recherche?text=${encodeURIComponent(search)}&owner_type=private`
-    const scraperUrl = `https://api.scraperapi.com?api_key=${scraperApiKey}&url=${encodeURIComponent(targetUrl)}&premium=true`
+    const scraperUrl = `https://api.scraperapi.com?api_key=${scraperApiKey}&url=${encodeURIComponent(targetUrl)}&ultra_premium=true`
 
     const response = await fetch(scraperUrl)
     const html = await response.text()
