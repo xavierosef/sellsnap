@@ -12,12 +12,10 @@ export interface LeBonCoinListing {
  */
 export async function searchLeBonCoin(
   query: string,
+  scraperApiKey: string,
   limit: number = 10
 ): Promise<LeBonCoinListing[]> {
   try {
-    const config = useRuntimeConfig()
-    const scraperApiKey = config.scraperApiKey
-
     if (!scraperApiKey) {
       console.warn('[LeBonCoin] SCRAPER_API_KEY not configured, skipping market search')
       return []

@@ -144,7 +144,7 @@ Réponds UNIQUEMENT en JSON valide, sans backticks, sans texte avant/après :
 
     try {
       console.log(`[LeBonCoin] Searching for: "${searchQuery}"`)
-      marketListings = await searchLeBonCoin(searchQuery, 15)
+      marketListings = await searchLeBonCoin(searchQuery, config.scraperApiKey, 15)
       console.log(`[LeBonCoin] Found ${marketListings.length} listings`)
       priceStats = computePriceStats(marketListings)
       if (priceStats) {

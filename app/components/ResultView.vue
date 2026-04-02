@@ -193,6 +193,29 @@ function submitRefine() {
       </div>
     </div>
 
+    <!-- Refine -->
+    <div class="refine-box">
+      <label class="field-label">&#128295; Affiner l'annonce</label>
+      <div class="refine-row">
+        <input
+          v-model="editContext"
+          placeholder="Ex: Baisse le prix, mentionne la garantie restante..."
+          class="input refine-input"
+          :disabled="isRefining"
+          @keydown.enter="submitRefine"
+        />
+        <button
+          class="refine-btn"
+          :class="{ active: editContext.trim(), spinning: isRefining }"
+          :disabled="isRefining || !editContext.trim()"
+          @click="submitRefine"
+        >
+          <span v-if="isRefining" class="spinner" />
+          <span v-else>Régénérer</span>
+        </button>
+      </div>
+    </div>
+
     <!-- AI Stats -->
     <div v-if="aiStats" class="ai-stats">
       <div class="ai-stats-header">
@@ -216,27 +239,6 @@ function submitRefine() {
           <span class="ai-stat-value">{{ shortModel(aiStats.model) }}</span>
           <span class="ai-stat-label">Modèle</span>
         </div>
-      </div>
-    </div>
-
-    <!-- Refine -->
-    <div class="refine-box">
-      <label class="field-label">&#128295; Affiner l'annonce</label>
-      <div class="refine-row">
-        <input
-          v-model="editContext"
-          placeholder="Ex: Baisse le prix, mentionne la garantie restante..."
-          class="input refine-input"
-          @keydown.enter="submitRefine"
-        />
-        <button
-          class="refine-btn"
-          :class="{ active: editContext.trim() }"
-          :disabled="isRefining || !editContext.trim()"
-          @click="submitRefine"
-        >
-          {{ isRefining ? '...' : 'Régénérer' }}
-        </button>
       </div>
     </div>
 
@@ -379,11 +381,30 @@ function submitRefine() {
   cursor: not-allowed;
   font-family: 'DM Sans', sans-serif;
   transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 100px;
 }
 .refine-btn.active {
   background: rgba(108, 99, 255, 0.2);
   color: #a8a4ff;
   cursor: pointer;
+}
+.refine-btn.spinning {
+  background: rgba(108, 99, 255, 0.15);
+  cursor: wait;
+}
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(168, 164, 255, 0.3);
+  border-top-color: #a8a4ff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 .refine-btn.active:hover {
   background: rgba(108, 99, 255, 0.3);
