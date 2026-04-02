@@ -63,6 +63,45 @@ export function fileToBase64(file: File): Promise<string> {
   })
 }
 
+const THUMB_DIMENSION = 200
+
+/**
+ * Generate a small thumbnail (200px max) as base64 for storage
+ */
+export function generateThumbnail(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    const url = URL.createObjectURL(file)
+
+    img.onload = () => {
+      URL.revokeObjectURL(url)
+
+      let { width, height } = img
+      if (width > THUMB_DIMENSION || height > THUMB_DIMENSION) {
+        const ratio = Math.min(THUMB_DIMENSION / width, THUMB_DIMENSION / height)
+        width = Math.round(width * ratio)
+        height = Math.round(height * ratio)
+      }
+
+      const canvas = document.createElement('canvas')
+      canvas.width = width
+      canvas.height = height
+      const ctx = canvas.getContext('2d')!
+      ctx.drawImage(img, 0, 0, width, height)
+
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.7)
+      resolve(dataUrl)
+    }
+
+    img.onerror = () => {
+      URL.revokeObjectURL(url)
+      reject(new Error(`Impossible de lire l'image: ${file.name}`))
+    }
+
+    img.src = url
+  })
+}
+
 /**
  * Generate a preview URL for display (no resize, just a blob URL)
  */
