@@ -1,5 +1,5 @@
 export default defineNuxtRouteMiddleware(async (to) => {
-  if (to.path === '/login') return
+  if (to.path === '/login' || to.path === '/landing') return
 
   try {
     // Forward browser cookies during SSR (server-side rendering on reload)

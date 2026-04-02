@@ -17,3 +17,9 @@ export const listings = sqliteTable('listings', {
 
 export type Listing = typeof listings.$inferSelect
 export type NewListing = typeof listings.$inferInsert
+
+export const waitlist = sqliteTable('waitlist', {
+  id: text('id').primaryKey(),
+  email: text('email').notNull().unique(),
+  createdAt: integer('created_at', { mode: 'number' }).notNull(),
+})
