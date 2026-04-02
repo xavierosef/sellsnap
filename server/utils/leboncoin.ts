@@ -27,7 +27,7 @@ export async function searchLeBonCoin(
     const timeout = setTimeout(() => controller.abort(), 30000)
 
     const targetUrl = `https://www.leboncoin.fr/recherche?text=${encodeURIComponent(query)}&owner_type=private`
-    const scraperUrl = `https://api.scraperapi.com?api_key=${scraperApiKey}&url=${encodeURIComponent(targetUrl)}&country_code=fr&render=true`
+    const scraperUrl = `https://api.scraperapi.com?api_key=${scraperApiKey}&url=${encodeURIComponent(targetUrl)}`
 
     console.log(`[LeBonCoin] Fetching via ScraperAPI: ${targetUrl}`)
 
