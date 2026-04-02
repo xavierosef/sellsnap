@@ -1,9 +1,25 @@
 <script setup lang="ts">
-defineProps<{
+const props = defineProps<{
   name: string
   color: string
   url: string
+  copyText?: string
 }>()
+
+const emit = defineEmits<{
+  copied: [text: string]
+}>()
+
+async function handleClick() {
+  if (props.copyText) {
+    try {
+      await navigator.clipboard.writeText(props.copyText)
+      emit('copied', props.copyText)
+    } catch {
+      // Silently fail, still open the link
+    }
+  }
+}
 </script>
 
 <template>
@@ -13,6 +29,7 @@ defineProps<{
     rel="noopener noreferrer"
     class="platform-btn"
     :style="{ background: color, boxShadow: `0 4px 16px ${color}44` }"
+    @click="handleClick"
   >
     <slot />
     {{ name }}

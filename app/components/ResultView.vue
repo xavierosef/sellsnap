@@ -189,17 +189,18 @@ function submitRefine() {
     <!-- Platform buttons -->
     <div class="section">
       <p class="section-label">Publier sur</p>
+      <p class="section-hint">Le titre est copie automatiquement au clic</p>
       <div class="btn-row">
-        <PlatformButton name="LeBonCoin" color="#F56B2A" url="https://www.leboncoin.fr/deposer-une-annonce">
+        <PlatformButton name="LeBonCoin" color="#F56B2A" url="https://www.leboncoin.fr/deposer-une-annonce" :copy-text="title" @copied="emit('toast', 'Titre copie !')">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M21 13v10h-6v-6h-6v6H3V13H0L12 1l12 12h-3z"/></svg>
         </PlatformButton>
-        <PlatformButton name="Vinted" color="#09B1BA" url="https://www.vinted.fr/items/new">
+        <PlatformButton name="Vinted" color="#09B1BA" url="https://www.vinted.fr/items/new" :copy-text="title" @copied="emit('toast', 'Titre copie !')">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
         </PlatformButton>
-        <PlatformButton name="Facebook" color="#1877F2" url="https://www.facebook.com/marketplace/create/item">
+        <PlatformButton name="Facebook" color="#1877F2" url="https://www.facebook.com/marketplace/create/item" :copy-text="title" @copied="emit('toast', 'Titre copie !')">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
         </PlatformButton>
-        <PlatformButton name="eBay" color="#E53238" url="https://www.ebay.fr/sell/create">
+        <PlatformButton name="eBay" color="#E53238" url="https://www.ebay.fr/sell/create" :copy-text="title" @copied="emit('toast', 'Titre copie !')">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M5.762 13.941c0 1.7 1.105 2.833 2.85 2.833 1.848 0 3.026-1.153 3.026-2.966v-.373H8.612c-1.764 0-2.85.686-2.85 2.506z"/></svg>
         </PlatformButton>
       </div>
@@ -387,6 +388,13 @@ function submitRefine() {
   margin-bottom: 12px;
   text-transform: uppercase;
   letter-spacing: 0.06em;
+}
+.section-hint {
+  font-size: 11px;
+  color: #444;
+  margin-top: -6px;
+  margin-bottom: 12px;
+  font-style: italic;
 }
 .btn-row {
   display: flex;
