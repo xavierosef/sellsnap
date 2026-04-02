@@ -229,6 +229,7 @@ export function useAnalyze() {
 
   // Debounced save of field edits to the database
   let saveTimer: ReturnType<typeof setTimeout> | null = null
+  const lastSavedAt = ref(0)
 
   function saveFields() {
     if (!savedListingId.value) return
@@ -243,6 +244,7 @@ export function useAnalyze() {
             price: price.value,
           },
         })
+        lastSavedAt.value = Date.now()
       } catch (e) {
         console.warn('Auto-save field edit failed:', e)
       }
@@ -303,6 +305,7 @@ export function useAnalyze() {
     aiStats,
     market,
     savedListingId,
+    lastSavedAt,
     addImages,
     removeImage,
     cancelAnalysis,

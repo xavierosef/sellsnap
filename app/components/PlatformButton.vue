@@ -10,14 +10,19 @@ const emit = defineEmits<{
   copied: [text: string]
 }>()
 
-async function handleClick() {
+async function handleClick(event: MouseEvent) {
   if (props.copyText) {
+    event.preventDefault()
     try {
       await navigator.clipboard.writeText(props.copyText)
       emit('copied', props.copyText)
     } catch {
-      // Silently fail, still open the link
+      // Silently fail
     }
+    // Wait 800ms so user sees the toast, then open the link
+    setTimeout(() => {
+      window.open(props.url, '_blank', 'noopener,noreferrer')
+    }, 800)
   }
 }
 </script>

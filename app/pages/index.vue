@@ -13,6 +13,7 @@ const {
   isRefining,
   aiStats,
   market,
+  lastSavedAt,
   addImages,
   removeImage,
   cancelAnalysis,
@@ -28,6 +29,11 @@ async function logout() {
   await $fetch('/api/auth/logout', { method: 'POST' })
   navigateTo('/login')
 }
+
+// Show toast on auto-save
+watch(lastSavedAt, (val) => {
+  if (val > 0) showToast('Modifications enregistrees')
+})
 
 function showToast(msg: string) {
   toastMessage.value = msg
