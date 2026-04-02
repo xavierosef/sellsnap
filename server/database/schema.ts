@@ -10,6 +10,7 @@ export const listings = sqliteTable('listings', {
   context: text('context'),
   marketData: text('market_data'),
   aiStats: text('ai_stats'),
+  status: text('status').notNull().default('active'),
   createdAt: integer('created_at', { mode: 'number' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'number' }).notNull(),
 })

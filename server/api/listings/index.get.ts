@@ -1,20 +1,31 @@
-import { desc, or, like } from 'drizzle-orm'
+import { desc, or, like, eq, and } from 'drizzle-orm'
 import { useDB } from '../../database'
 import { listings } from '../../database/schema'
 
 export default defineEventHandler(async (event) => {
   const query = getQuery(event)
   const search = (query.q as string)?.trim()
+  const status = (query.status as string)?.trim()
 
   const db = useDB()
 
-  let rows
+  const conditions = []
+
   if (search) {
     const pattern = `%${search}%`
+    conditions.push(or(like(listings.title, pattern), like(listings.description, pattern)))
+  }
+
+  if (status) {
+    conditions.push(eq(listings.status, status))
+  }
+
+  let rows
+  if (conditions.length > 0) {
     rows = await db
       .select()
       .from(listings)
-      .where(or(like(listings.title, pattern), like(listings.description, pattern)))
+      .where(conditions.length === 1 ? conditions[0] : and(...conditions))
       .orderBy(desc(listings.createdAt))
   } else {
     rows = await db.select().from(listings).orderBy(desc(listings.createdAt))

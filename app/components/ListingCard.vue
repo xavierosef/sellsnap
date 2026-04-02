@@ -5,6 +5,7 @@ defineProps<{
   price: string
   thumbnail: string | null
   createdAt: number
+  status: string
 }>()
 
 const emit = defineEmits<{
@@ -28,7 +29,7 @@ function timeAgo(timestamp: number): string {
 <template>
   <div class="card">
     <NuxtLink :to="`/history/${id}`" class="card-link">
-      <div class="card-thumb">
+      <div class="card-thumb" :class="{ sold: status === 'sold' }">
         <img v-if="thumbnail" :src="thumbnail" alt="" class="thumb-img" />
         <div v-else class="thumb-placeholder">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -43,6 +44,7 @@ function timeAgo(timestamp: number): string {
         <div class="card-meta">
           <span class="card-price">{{ price }} &euro;</span>
           <span class="card-date">{{ timeAgo(createdAt) }}</span>
+          <span v-if="status === 'sold'" class="card-sold">Vendu</span>
         </div>
       </div>
     </NuxtLink>
@@ -154,5 +156,19 @@ function timeAgo(timestamp: number): string {
 .delete-btn:hover {
   color: #ff6b6b;
   background: rgba(255, 80, 80, 0.08);
+}
+
+.card-thumb.sold {
+  opacity: 0.5;
+}
+.card-sold {
+  font-size: 10px;
+  font-weight: 700;
+  color: #4ade80;
+  background: rgba(74, 222, 128, 0.1);
+  padding: 2px 8px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 </style>

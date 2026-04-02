@@ -52,6 +52,21 @@ function debouncedSave() {
   }, 1000)
 }
 
+async function toggleSold() {
+  if (!listing.value) return
+  const newStatus = listing.value.status === 'sold' ? 'active' : 'sold'
+  try {
+    await $fetch(`/api/listings/${id}`, {
+      method: 'PATCH',
+      body: { status: newStatus },
+    })
+    listing.value.status = newStatus
+    showToast(newStatus === 'sold' ? 'Marque comme vendu !' : 'Remis en vente !')
+  } catch (e: any) {
+    showToast('Erreur')
+  }
+}
+
 async function deleteListing() {
   try {
     await $fetch(`/api/listings/${id}`, { method: 'DELETE' })
@@ -182,6 +197,21 @@ onUnmounted(() => {
         </div>
 
         <div class="divider" />
+
+        <!-- Sold toggle -->
+        <button
+          class="sold-btn"
+          :class="{ 'is-sold': listing.status === 'sold' }"
+          @click="toggleSold"
+        >
+          <svg v-if="listing.status !== 'sold'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 6L9 17l-5-5" />
+          </svg>
+          <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 12h18" />
+          </svg>
+          {{ listing.status === 'sold' ? 'Remettre en vente' : 'Marquer comme vendu' }}
+        </button>
 
         <!-- Delete -->
         <button class="delete-btn" @click="deleteListing">
@@ -318,6 +348,32 @@ onUnmounted(() => {
   transition: all 0.2s;
 }
 .delete-btn:hover { background: rgba(255, 80, 80, 0.12); border-color: rgba(255, 80, 80, 0.3); }
+
+.sold-btn {
+  width: 100%;
+  padding: 14px 24px;
+  border-radius: 12px;
+  border: 1px solid rgba(74, 222, 128, 0.2);
+  background: rgba(74, 222, 128, 0.06);
+  color: #4ade80;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.sold-btn:hover { background: rgba(74, 222, 128, 0.12); border-color: rgba(74, 222, 128, 0.3); }
+.sold-btn.is-sold {
+  border-color: rgba(108, 99, 255, 0.2);
+  background: rgba(108, 99, 255, 0.06);
+  color: #a8a4ff;
+}
+.sold-btn.is-sold:hover { background: rgba(108, 99, 255, 0.12); border-color: rgba(108, 99, 255, 0.3); }
 
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(12px); }

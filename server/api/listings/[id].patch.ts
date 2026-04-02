@@ -20,6 +20,7 @@ export default defineEventHandler(async (event) => {
   if (body.title !== undefined) updates.title = body.title
   if (body.description !== undefined) updates.description = body.description
   if (body.price !== undefined) updates.price = body.price
+  if (body.status !== undefined) updates.status = body.status
 
   await db.update(listings).set(updates).where(eq(listings.id, id))
 

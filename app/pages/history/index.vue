@@ -2,17 +2,26 @@
 import type { Listing } from '~~/server/database/schema'
 
 const search = ref('')
+const statusFilter = ref('')
 const listings = ref<Listing[]>([])
 const loading = ref(true)
 const error = ref('')
 const confirmDeleteId = ref<string | null>(null)
 
+function setFilter(status: string) {
+  statusFilter.value = status
+  fetchListings()
+}
+
 async function fetchListings() {
   loading.value = true
   error.value = ''
   try {
-    const params = search.value ? `?q=${encodeURIComponent(search.value)}` : ''
-    const data = await $fetch<{ listings: Listing[] }>(`/api/listings${params}`)
+    const params = new URLSearchParams()
+    if (search.value) params.set('q', search.value)
+    if (statusFilter.value) params.set('status', statusFilter.value)
+    const qs = params.toString() ? `?${params.toString()}` : ''
+    const data = await $fetch<{ listings: Listing[] }>(`/api/listings${qs}`)
     listings.value = data.listings
   } catch (e: any) {
     error.value = 'Impossible de charger les annonces.'
@@ -70,6 +79,13 @@ function resetConfirm() {
     <main class="main" @click="resetConfirm">
       <SearchBar v-model="search" />
 
+      <!-- Status filter tabs -->
+      <div class="filter-tabs">
+        <button class="filter-tab" :class="{ active: statusFilter === '' }" @click="setFilter('')">Toutes</button>
+        <button class="filter-tab" :class="{ active: statusFilter === 'active' }" @click="setFilter('active')">En vente</button>
+        <button class="filter-tab" :class="{ active: statusFilter === 'sold' }" @click="setFilter('sold')">Vendues</button>
+      </div>
+
       <div v-if="error" class="error-box">{{ error }}</div>
 
       <div v-if="loading" class="loading">Chargement...</div>
@@ -93,6 +109,7 @@ function resetConfirm() {
           :price="listing.price"
           :thumbnail="listing.thumbnail"
           :created-at="listing.createdAt"
+          :status="listing.status || 'active'"
           @delete="deleteListing"
         />
       </div>
@@ -224,5 +241,32 @@ function resetConfirm() {
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+.filter-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 20px;
+}
+.filter-tab {
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: transparent;
+  color: #555;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: all 0.2s;
+}
+.filter-tab.active {
+  background: rgba(108, 99, 255, 0.15);
+  border-color: rgba(108, 99, 255, 0.3);
+  color: #a8a4ff;
+}
+.filter-tab:hover:not(.active) {
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #888;
 }
 </style>
