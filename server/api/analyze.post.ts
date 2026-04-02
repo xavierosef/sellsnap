@@ -154,8 +154,15 @@ Réponds UNIQUEMENT en JSON valide, sans backticks, sans texte avant/après :
       console.warn(`[LeBonCoin] Search failed:`, e.message || e)
     }
 
+    if (!priceStats) {
+      console.log('[Pass 2] Skipped: no market data available')
+    } else if (priceStats.count < 2) {
+      console.log(`[Pass 2] Skipped: only ${priceStats.count} listing(s)`)
+    }
+
     // Si on a des données marché, 2ème appel Claude pour ajuster le prix
     if (priceStats && priceStats.count >= 2) {
+      console.log(`[Pass 2] Triggering price adjustment (${priceStats.count} listings, median: ${priceStats.median}€, initial price: ${finalPrice}€)`)
       const topListings = marketListings.slice(0, 8).map(
         (l) => `- "${l.title}" → ${l.price} €${l.location ? ` (${l.location})` : ''}`
       ).join('\n')
@@ -193,6 +200,7 @@ Réponds UNIQUEMENT en JSON valide, sans backticks :
         totalOutputTokens += pass2Data.usage?.output_tokens || 0
 
         if (pass2.price) finalPrice = pass2.price
+        if (pass2.priceReasoning) console.log(`[Pass 2] Price reasoning: ${pass2.priceReasoning}`)
       } catch (e) {
         // Fail graceful — on garde le prix de la passe 1
         console.warn('[Pass 2] Price adjustment failed, keeping pass 1 price:', e)
