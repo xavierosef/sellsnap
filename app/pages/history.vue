@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Listing } from '~/server/database/schema'
+import type { Listing } from '~~/server/database/schema'
 
 const search = ref('')
 const listings = ref<Listing[]>([])

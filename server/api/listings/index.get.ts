@@ -1,6 +1,6 @@
 import { desc, or, like } from 'drizzle-orm'
-import { useDB } from '~/server/database'
-import { listings } from '~/server/database/schema'
+import { useDB } from '../../database'
+import { listings } from '../../database/schema'
 
 export default defineEventHandler(async (event) => {
   const query = getQuery(event)
