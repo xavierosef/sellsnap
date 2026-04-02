@@ -2,7 +2,7 @@ export default defineEventHandler(async (event) => {
   const url = getRequestURL(event)
 
   // Only protect /api/analyze
-  if (!url.pathname.startsWith('/api/analyze')) return
+  if (!url.pathname.startsWith('/api/analyze') && !url.pathname.startsWith('/api/listings')) return
 
   const token = getCookie(event, 'sellsnap_session')
 
