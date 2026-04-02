@@ -6,17 +6,25 @@ const id = route.params.id as string
 
 const listing = ref<Listing | null>(null)
 const loading = ref(true)
-const saving = ref(false)
 const error = ref('')
 const toastMessage = ref('')
 const toastVisible = ref(false)
 let toastTimer: ReturnType<typeof setTimeout> | null = null
+let saveTimer: ReturnType<typeof setTimeout> | null = null
 
 async function fetchListing() {
   loading.value = true
   try {
     const data = await $fetch<{ listing: Listing }>(`/api/listings/${id}`)
     listing.value = data.listing
+    // Start watching for changes after initial load
+    nextTick(() => {
+      watch(
+        () => listing.value ? [listing.value.title, listing.value.description, listing.value.price] : null,
+        () => { if (listing.value) debouncedSave() },
+        { deep: true }
+      )
+    })
   } catch (e: any) {
     error.value = 'Annonce introuvable.'
   } finally {
@@ -24,25 +32,24 @@ async function fetchListing() {
   }
 }
 
-async function save() {
-  if (!listing.value) return
-  saving.value = true
-  try {
-    const data = await $fetch<{ listing: Listing }>(`/api/listings/${id}`, {
-      method: 'PATCH',
-      body: {
-        title: listing.value.title,
-        description: listing.value.description,
-        price: listing.value.price,
-      },
-    })
-    listing.value = data.listing
-    showToast('Sauvegarde !')
-  } catch (e: any) {
-    error.value = 'Erreur lors de la sauvegarde.'
-  } finally {
-    saving.value = false
-  }
+function debouncedSave() {
+  if (saveTimer) clearTimeout(saveTimer)
+  saveTimer = setTimeout(async () => {
+    if (!listing.value) return
+    try {
+      await $fetch(`/api/listings/${id}`, {
+        method: 'PATCH',
+        body: {
+          title: listing.value.title,
+          description: listing.value.description,
+          price: listing.value.price,
+        },
+      })
+      showToast('Modifications enregistrees')
+    } catch (e: any) {
+      showToast('Erreur de sauvegarde')
+    }
+  }, 1000)
 }
 
 async function deleteListing() {
@@ -60,7 +67,7 @@ function showToast(msg: string) {
   if (toastTimer) clearTimeout(toastTimer)
   toastTimer = setTimeout(() => {
     toastVisible.value = false
-  }, 2000)
+  }, 2500)
 }
 
 async function copyText(text: string, label: string) {
@@ -78,12 +85,27 @@ const fullAnnonce = computed(() => {
 })
 
 onMounted(fetchListing)
+
+onUnmounted(() => {
+  if (saveTimer) clearTimeout(saveTimer)
+  if (toastTimer) clearTimeout(toastTimer)
+})
 </script>
 
 <template>
   <div class="app">
     <div class="bg-glow bg-glow-1" />
     <div class="bg-glow bg-glow-2" />
+
+    <!-- Toast top bar -->
+    <Transition name="toast">
+      <div v-if="toastVisible" class="toast-bar">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5">
+          <path d="M20 6L9 17l-5-5" />
+        </svg>
+        <span>{{ toastMessage }}</span>
+      </div>
+    </Transition>
 
     <header class="header">
       <NuxtLink to="/history" class="back-btn" title="Retour">
@@ -126,12 +148,9 @@ onMounted(fetchListing)
           </div>
         </div>
 
-        <button class="save-btn" :disabled="saving" @click="save">
-          {{ saving ? 'Sauvegarde...' : 'Sauvegarder les modifications' }}
-        </button>
-
         <div class="divider" />
 
+        <!-- Copy buttons -->
         <div class="section">
           <p class="section-label">Copier</p>
           <div class="btn-row">
@@ -142,15 +161,34 @@ onMounted(fetchListing)
           </div>
         </div>
 
+        <!-- Platform buttons -->
+        <div class="section">
+          <p class="section-label">Publier sur</p>
+          <p class="section-hint">Le titre est copie automatiquement au clic</p>
+          <div class="btn-row">
+            <PlatformButton name="LeBonCoin" color="#F56B2A" url="https://www.leboncoin.fr/deposer-une-annonce" :copy-text="listing.title" @copied="showToast('Titre copie !')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M21 13v10h-6v-6h-6v6H3V13H0L12 1l12 12h-3z"/></svg>
+            </PlatformButton>
+            <PlatformButton name="Vinted" color="#09B1BA" url="https://www.vinted.fr/items/new" :copy-text="listing.title" @copied="showToast('Titre copie !')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
+            </PlatformButton>
+            <PlatformButton name="Facebook" color="#1877F2" url="https://www.facebook.com/marketplace/create/item" :copy-text="listing.title" @copied="showToast('Titre copie !')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+            </PlatformButton>
+            <PlatformButton name="eBay" color="#E53238" url="https://www.ebay.fr/sell/create" :copy-text="listing.title" @copied="showToast('Titre copie !')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M5.762 13.941c0 1.7 1.105 2.833 2.85 2.833 1.848 0 3.026-1.153 3.026-2.966v-.373H8.612c-1.764 0-2.85.686-2.85 2.506z"/></svg>
+            </PlatformButton>
+          </div>
+        </div>
+
         <div class="divider" />
 
+        <!-- Delete -->
         <button class="delete-btn" @click="deleteListing">
           Supprimer cette annonce
         </button>
       </div>
     </main>
-
-    <ToastNotification :message="toastMessage" :visible="toastVisible" />
   </div>
 </template>
 
@@ -166,6 +204,30 @@ onMounted(fetchListing)
 .bg-glow { position: fixed; pointer-events: none; }
 .bg-glow-1 { top: -200px; right: -200px; width: 600px; height: 600px; background: radial-gradient(circle, rgba(108, 99, 255, 0.08) 0%, transparent 70%); }
 .bg-glow-2 { bottom: -200px; left: -200px; width: 500px; height: 500px; background: radial-gradient(circle, rgba(255, 107, 157, 0.06) 0%, transparent 70%); }
+
+.toast-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 20px;
+  background: rgba(16, 16, 28, 0.95);
+  border-bottom: 1px solid rgba(74, 222, 128, 0.2);
+  backdrop-filter: blur(12px);
+  font-size: 14px;
+  font-weight: 600;
+  color: #d0d0d0;
+}
+
+.toast-enter-active { transition: all 0.3s ease; }
+.toast-leave-active { transition: all 0.3s ease; }
+.toast-enter-from { transform: translateY(-100%); opacity: 0; }
+.toast-leave-to { transform: translateY(-100%); opacity: 0; }
 
 .header {
   padding: 28px 32px;
@@ -235,28 +297,11 @@ onMounted(fetchListing)
 .price-input { width: 120px; font-size: 28px; font-weight: 800; font-family: 'Space Mono', monospace; color: #6c63ff; text-align: center; }
 .price-euro { font-size: 24px; font-weight: 700; color: #6c63ff; font-family: 'Space Mono', monospace; }
 
-.save-btn {
-  width: 100%;
-  padding: 14px 24px;
-  border-radius: 12px;
-  border: none;
-  background: linear-gradient(135deg, #6c63ff 0%, #ff6b9d 100%);
-  color: #fff;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  font-family: 'DM Sans', sans-serif;
-  transition: all 0.2s;
-  box-shadow: 0 8px 32px rgba(108, 99, 255, 0.3);
-  margin-bottom: 8px;
-}
-.save-btn:hover { box-shadow: 0 12px 40px rgba(108, 99, 255, 0.4); transform: translateY(-1px); }
-.save-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
-
 .divider { height: 1px; background: rgba(255, 255, 255, 0.06); margin: 20px 0; }
 
 .section { margin-bottom: 20px; }
 .section-label { font-size: 12px; color: #666; font-weight: 600; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
+.section-hint { font-size: 11px; color: #444; margin-top: -6px; margin-bottom: 12px; font-style: italic; }
 .btn-row { display: flex; flex-wrap: wrap; gap: 8px; }
 
 .delete-btn {
