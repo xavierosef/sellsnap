@@ -32,5 +32,6 @@ export default defineNuxtConfig({
     sessionSecret: process.env.SESSION_SECRET || 'sellsnap-secret-change-me',
     tursoUrl: process.env.TURSO_DATABASE_URL || '',
     tursoAuthToken: process.env.TURSO_AUTH_TOKEN || '',
+    scraperApiKey: process.env.SCRAPER_API_KEY || '',
   },
 })

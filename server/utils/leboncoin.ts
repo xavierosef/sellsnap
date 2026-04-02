@@ -5,24 +5,8 @@ export interface LeBonCoinListing {
   location?: string
 }
 
-const BROWSER_HEADERS = {
-  'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
-  'Accept-Language': 'fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7',
-  'Accept-Encoding': 'gzip, deflate, br',
-  'Cache-Control': 'no-cache',
-  'Sec-Ch-Ua': '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
-  'Sec-Ch-Ua-Mobile': '?0',
-  'Sec-Ch-Ua-Platform': '"macOS"',
-  'Sec-Fetch-Dest': 'document',
-  'Sec-Fetch-Mode': 'navigate',
-  'Sec-Fetch-Site': 'none',
-  'Sec-Fetch-User': '?1',
-  'Upgrade-Insecure-Requests': '1',
-}
-
 /**
- * Search LeBonCoin by scraping the HTML search page.
+ * Search LeBonCoin via ScraperAPI to bypass DataDome anti-bot protection.
  * Extracts listing data from the embedded __NEXT_DATA__ JSON.
  * Returns [] on any failure (fail graceful).
  */
@@ -31,18 +15,25 @@ export async function searchLeBonCoin(
   limit: number = 10
 ): Promise<LeBonCoinListing[]> {
   try {
+    const config = useRuntimeConfig()
+    const scraperApiKey = config.scraperApiKey
+
+    if (!scraperApiKey) {
+      console.warn('[LeBonCoin] SCRAPER_API_KEY not configured, skipping market search')
+      return []
+    }
+
     const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 8000)
+    const timeout = setTimeout(() => controller.abort(), 30000)
 
-    const searchUrl = `https://www.leboncoin.fr/recherche?text=${encodeURIComponent(query)}&owner_type=private`
+    const targetUrl = `https://www.leboncoin.fr/recherche?text=${encodeURIComponent(query)}&owner_type=private`
+    const scraperUrl = `https://api.scraperapi.com?api_key=${scraperApiKey}&url=${encodeURIComponent(targetUrl)}&country_code=fr&render=true`
 
-    console.log(`[LeBonCoin] Fetching: ${searchUrl}`)
+    console.log(`[LeBonCoin] Fetching via ScraperAPI: ${targetUrl}`)
 
-    const response = await fetch(searchUrl, {
+    const response = await fetch(scraperUrl, {
       method: 'GET',
-      headers: BROWSER_HEADERS,
       signal: controller.signal,
-      redirect: 'follow',
     })
 
     clearTimeout(timeout)
@@ -83,7 +74,7 @@ export async function searchLeBonCoin(
     return []
   } catch (err: any) {
     if (err.name === 'AbortError') {
-      console.warn('[LeBonCoin] Search timed out (8s)')
+      console.warn('[LeBonCoin] Search timed out (30s)')
     } else {
       console.warn(`[LeBonCoin] Search error: ${err.message}`)
     }
