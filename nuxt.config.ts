@@ -30,5 +30,7 @@ export default defineNuxtConfig({
     anthropicApiKey: process.env.ANTHROPIC_API_KEY || '',
     appPassword: process.env.APP_PASSWORD || '',
     sessionSecret: process.env.SESSION_SECRET || 'sellsnap-secret-change-me',
+    tursoUrl: process.env.TURSO_DATABASE_URL || '',
+    tursoAuthToken: process.env.TURSO_AUTH_TOKEN || '',
   },
 })

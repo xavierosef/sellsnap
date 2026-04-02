@@ -10,8 +10,14 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
+    "@libsql/client": "^0.17.2",
+    "drizzle-orm": "^0.45.2",
+    "nanoid": "^5.1.7",
     "nuxt": "^4.4.2",
     "vue": "^3.5.30",
     "vue-router": "^5.0.4"
+  },
+  "devDependencies": {
+    "drizzle-kit": "^0.31.10"
   }
 }
