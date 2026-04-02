@@ -327,11 +327,25 @@ function submitRefine() {
 .price-market-row {
   display: flex;
   gap: 16px;
-  align-items: flex-start;
+  align-items: stretch;
   margin-bottom: 20px;
 }
 .price-block {
   flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+}
+.price-block .price-row {
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+@media (max-width: 500px) {
+  .price-market-row {
+    flex-direction: column;
+    gap: 12px;
+  }
 }
 .price-row {
   display: flex;

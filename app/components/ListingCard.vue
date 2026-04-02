@@ -144,7 +144,8 @@ function timeAgo(timestamp: number): string {
   border: none;
   color: #444;
   cursor: pointer;
-  padding: 10px 14px;
+  padding: 10px;
+  margin-right: 10px;
   border-radius: 8px;
   transition: all 0.2s;
   flex-shrink: 0;
