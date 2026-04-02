@@ -6,8 +6,9 @@ export interface LeBonCoinListing {
 }
 
 /**
- * Search LeBonCoin via ScraperAPI to bypass DataDome anti-bot protection.
- * Extracts listing data from the embedded __NEXT_DATA__ JSON.
+ * Search for LeBonCoin market prices via Google search.
+ * Uses ScraperAPI (basic proxy, 1 credit/request) to search Google
+ * for "site:leboncoin.fr <query>" and extracts prices from snippets.
  * Returns [] on any failure (fail graceful).
  */
 export async function searchLeBonCoin(
@@ -24,10 +25,11 @@ export async function searchLeBonCoin(
     const controller = new AbortController()
     const timeout = setTimeout(() => controller.abort(), 30000)
 
-    const targetUrl = `https://www.leboncoin.fr/recherche?text=${encodeURIComponent(query)}&owner_type=private`
-    const scraperUrl = `https://api.scraperapi.com?api_key=${scraperApiKey}&url=${encodeURIComponent(targetUrl)}&ultra_premium=true`
+    const googleQuery = `site:leboncoin.fr ${query}`
+    const googleUrl = `https://www.google.fr/search?q=${encodeURIComponent(googleQuery)}&num=20&hl=fr`
+    const scraperUrl = `https://api.scraperapi.com?api_key=${scraperApiKey}&url=${encodeURIComponent(googleUrl)}&autoparse=true`
 
-    console.log(`[LeBonCoin] Fetching via ScraperAPI: ${targetUrl}`)
+    console.log(`[LeBonCoin] Fetching via Google+ScraperAPI: "${query}"`)
 
     const response = await fetch(scraperUrl, {
       method: 'GET',
@@ -37,39 +39,55 @@ export async function searchLeBonCoin(
     clearTimeout(timeout)
 
     if (!response.ok) {
-      console.warn(`[LeBonCoin] HTML fetch failed: ${response.status}`)
+      console.warn(`[LeBonCoin] Google fetch failed: ${response.status}`)
       return []
     }
 
-    const html = await response.text()
+    const data = await response.json()
+    const results = data.organic_results || []
 
-    // Strategy 1: Extract from __NEXT_DATA__ (Next.js SSR data)
-    let listings = extractFromNextData(html, limit)
-    if (listings.length > 0) {
-      console.log(`[LeBonCoin] Extracted ${listings.length} listings from __NEXT_DATA__`)
-      return listings
+    if (results.length === 0) {
+      console.warn('[LeBonCoin] No Google results found')
+      return []
     }
 
-    // Strategy 2: Extract from embedded JSON-LD
-    listings = extractFromJsonLd(html, limit)
-    if (listings.length > 0) {
-      console.log(`[LeBonCoin] Extracted ${listings.length} listings from JSON-LD`)
-      return listings
+    // Extract prices from snippets and titles
+    const listings: LeBonCoinListing[] = []
+    const priceRegex = /(\d[\d\s,.]*)\s*€/g
+
+    for (const result of results) {
+      const text = `${result.title || ''} ${result.snippet || ''}`
+      const url = result.link || ''
+
+      // Skip category/search pages, only want actual listings or pages with prices
+      let match
+      priceRegex.lastIndex = 0
+      while ((match = priceRegex.exec(text)) !== null) {
+        const price = parseInt(match[1].replace(/[\s,.]/g, ''))
+        if (price > 0 && price < 50000) {
+          // Extract a title from the Google result
+          const title = (result.title || '').replace(/\s*-\s*leboncoin.*$/i, '').replace(/d'occasion.*$/i, '').trim()
+
+          listings.push({
+            title: title || query,
+            price,
+            url: url.startsWith('http') ? url : `https://www.leboncoin.fr`,
+            location: '',
+          })
+        }
+      }
     }
 
-    // Strategy 3: Extract from any JSON blob containing ad data
-    listings = extractFromInlineJson(html, limit)
-    if (listings.length > 0) {
-      console.log(`[LeBonCoin] Extracted ${listings.length} listings from inline JSON`)
-      return listings
-    }
+    // Deduplicate by price (keep first occurrence)
+    const seen = new Set<number>()
+    const unique = listings.filter(l => {
+      if (seen.has(l.price)) return false
+      seen.add(l.price)
+      return true
+    })
 
-    console.warn(`[LeBonCoin] Could not extract listings from HTML (${html.length} bytes)`)
-    // Log a snippet to help debug
-    if (html.includes('datadome')) {
-      console.warn('[LeBonCoin] DataDome challenge detected in HTML')
-    }
-    return []
+    console.log(`[LeBonCoin] Extracted ${unique.length} price points from Google results`)
+    return unique.slice(0, limit)
   } catch (err: any) {
     if (err.name === 'AbortError') {
       console.warn('[LeBonCoin] Search timed out (30s)')
@@ -78,87 +96,6 @@ export async function searchLeBonCoin(
     }
     return []
   }
-}
-
-function extractFromNextData(html: string, limit: number): LeBonCoinListing[] {
-  const match = html.match(/<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/)
-  if (!match) return []
-
-  try {
-    const data = JSON.parse(match[1])
-    // Navigate the Next.js data structure to find ads
-    const props = data?.props?.pageProps
-    const ads = props?.searchData?.ads || props?.ads || props?.initialData?.ads || []
-    return parseAds(ads, limit)
-  } catch {
-    return []
-  }
-}
-
-function extractFromJsonLd(html: string, limit: number): LeBonCoinListing[] {
-  const regex = /<script type="application\/ld\+json">([\s\S]*?)<\/script>/g
-  let match
-  while ((match = regex.exec(html)) !== null) {
-    try {
-      const data = JSON.parse(match[1])
-      if (data['@type'] === 'ItemList' && data.itemListElement) {
-        return data.itemListElement
-          .filter((item: any) => item.offers?.price != null)
-          .slice(0, limit)
-          .map((item: any) => ({
-            title: item.name || '',
-            price: Number(item.offers.price),
-            url: item.url || '',
-            location: '',
-          }))
-      }
-    } catch {
-      continue
-    }
-  }
-  return []
-}
-
-function extractFromInlineJson(html: string, limit: number): LeBonCoinListing[] {
-  // Look for patterns like "ads":[{...}] in any inline script
-  const adsMatch = html.match(/"ads"\s*:\s*(\[[\s\S]*?\])\s*[,}]/)
-  if (!adsMatch) return []
-
-  try {
-    const ads = JSON.parse(adsMatch[1])
-    return parseAds(ads, limit)
-  } catch {
-    return []
-  }
-}
-
-function parseAds(ads: any[], limit: number): LeBonCoinListing[] {
-  if (!Array.isArray(ads) || ads.length === 0) return []
-
-  return ads
-    .filter((ad: any) => {
-      const price = ad.price ?? ad.price_cents
-      return price != null
-    })
-    .slice(0, limit)
-    .map((ad: any) => {
-      let price = 0
-      if (Array.isArray(ad.price)) {
-        price = Number(ad.price[0])
-      } else if (ad.price_cents) {
-        price = Math.round(Number(ad.price_cents) / 100)
-      } else {
-        price = Number(ad.price)
-      }
-
-      return {
-        title: ad.subject || ad.title || ad.name || '',
-        price,
-        url: ad.url || (ad.list_id ? `https://www.leboncoin.fr/ad/${ad.list_id}` : ''),
-        location: ad.location?.city || ad.location?.department_name || ad.location?.name || '',
-      }
-    })
-    .filter((l) => l.price > 0 && l.title)
 }
 
 /**
