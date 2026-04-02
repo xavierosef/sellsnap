@@ -98,57 +98,65 @@ function submitRefine() {
       />
     </div>
 
-    <!-- Price -->
-    <div class="field">
-      <label class="field-label">Prix suggéré</label>
-      <div class="price-row">
-        <input
-          :value="price"
-          class="input price-input"
-          @input="emit('update:price', ($event.target as HTMLInputElement).value)"
-        />
-        <span class="price-euro">&euro;</span>
+    <!-- Price + Market side by side -->
+    <div class="price-market-row">
+      <div class="price-block">
+        <label class="field-label">Prix suggéré</label>
+        <div class="price-row">
+          <input
+            :value="price"
+            class="input price-input"
+            @input="emit('update:price', ($event.target as HTMLInputElement).value)"
+          />
+          <span class="price-euro">&euro;</span>
+        </div>
+      </div>
+
+      <div v-if="market" class="market-box">
+        <div class="market-header">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><polyline points="18 9 12 15 9 12 3 18"/></svg>
+          <span>Marché LeBonCoin</span>
+          <span class="market-count">{{ market.stats.count }} ann.</span>
+        </div>
+        <div class="market-stats-row">
+          <div class="market-stat">
+            <span class="market-stat-val">{{ market.stats.min }}&euro;</span>
+            <span class="market-stat-lbl">Min</span>
+          </div>
+          <div class="market-stat highlight">
+            <span class="market-stat-val">{{ market.stats.median }}&euro;</span>
+            <span class="market-stat-lbl">Méd.</span>
+          </div>
+          <div class="market-stat">
+            <span class="market-stat-val">{{ market.stats.average }}&euro;</span>
+            <span class="market-stat-lbl">Moy.</span>
+          </div>
+          <div class="market-stat">
+            <span class="market-stat-val">{{ market.stats.max }}&euro;</span>
+            <span class="market-stat-lbl">Max</span>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Market prices -->
-    <div v-if="market" class="market-box">
-      <div class="market-header">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><polyline points="18 9 12 15 9 12 3 18"/></svg>
-        <span>Prix du marché LeBonCoin</span>
-        <span class="market-count">{{ market.stats.count }} annonces</span>
-      </div>
-      <div class="market-stats-row">
-        <div class="market-stat">
-          <span class="market-stat-val">{{ market.stats.min }} &euro;</span>
-          <span class="market-stat-lbl">Min</span>
+    <!-- Market listings (expandable, below) -->
+    <div v-if="market" class="market-listings-box">
+      <details class="market-details">
+        <summary class="market-summary">Voir les {{ market.listings.length }} annonces similaires</summary>
+        <div class="market-listings">
+          <a
+            v-for="(listing, i) in market.listings"
+            :key="i"
+            :href="listing.url"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="market-listing"
+          >
+            <span class="market-listing-title">{{ listing.title }}</span>
+            <span class="market-listing-price">{{ listing.price }} &euro;</span>
+          </a>
         </div>
-        <div class="market-stat highlight">
-          <span class="market-stat-val">{{ market.stats.median }} &euro;</span>
-          <span class="market-stat-lbl">Médian</span>
-        </div>
-        <div class="market-stat">
-          <span class="market-stat-val">{{ market.stats.average }} &euro;</span>
-          <span class="market-stat-lbl">Moyen</span>
-        </div>
-        <div class="market-stat">
-          <span class="market-stat-val">{{ market.stats.max }} &euro;</span>
-          <span class="market-stat-lbl">Max</span>
-        </div>
-      </div>
-      <div class="market-listings">
-        <a
-          v-for="(listing, i) in market.listings"
-          :key="i"
-          :href="listing.url"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="market-listing"
-        >
-          <span class="market-listing-title">{{ listing.title }}</span>
-          <span class="market-listing-price">{{ listing.price }} &euro;</span>
-        </a>
-      </div>
+      </details>
     </div>
 
     <!-- Divider -->
@@ -314,13 +322,22 @@ function submitRefine() {
   resize: vertical;
 }
 
+.price-market-row {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+.price-block {
+  flex-shrink: 0;
+}
 .price-row {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 .price-input {
-  width: 120px;
+  width: 100px;
   font-size: 28px;
   font-weight: 800;
   font-family: 'Space Mono', monospace;
@@ -403,8 +420,9 @@ function submitRefine() {
 }
 
 .market-box {
-  margin-bottom: 20px;
-  padding: 14px 18px;
+  flex: 1;
+  min-width: 0;
+  padding: 10px 14px;
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.05);
@@ -412,12 +430,12 @@ function submitRefine() {
 .market-header {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 11px;
+  gap: 5px;
+  font-size: 10px;
   color: #555;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  margin-bottom: 12px;
+  letter-spacing: 0.04em;
+  margin-bottom: 8px;
 }
 .market-count {
   margin-left: auto;
@@ -429,19 +447,16 @@ function submitRefine() {
 .market-stats-row {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-  margin-bottom: 12px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  gap: 4px;
 }
 .market-stat {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 1px;
 }
 .market-stat-val {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   color: #777;
   font-family: 'Space Mono', monospace;
@@ -450,21 +465,51 @@ function submitRefine() {
   color: #6c63ff;
 }
 .market-stat-lbl {
-  font-size: 10px;
+  font-size: 9px;
   color: #444;
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
+.market-listings-box {
+  margin-bottom: 16px;
+}
+.market-details {
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+.market-summary {
+  padding: 10px 14px;
+  font-size: 11px;
+  color: #555;
+  cursor: pointer;
+  list-style: none;
+  transition: color 0.2s;
+}
+.market-summary::-webkit-details-marker {
+  display: none;
+}
+.market-summary::before {
+  content: '+ ';
+  color: #6c63ff;
+}
+details[open] .market-summary::before {
+  content: '- ';
+}
+.market-summary:hover {
+  color: #888;
+}
 .market-listings {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
+  padding: 0 10px 10px;
 }
 .market-listing {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 6px 8px;
+  padding: 5px 8px;
   border-radius: 6px;
   text-decoration: none;
   transition: background 0.2s;
@@ -473,7 +518,7 @@ function submitRefine() {
   background: rgba(255, 255, 255, 0.04);
 }
 .market-listing-title {
-  font-size: 12px;
+  font-size: 11px;
   color: #666;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -481,7 +526,7 @@ function submitRefine() {
   max-width: 70%;
 }
 .market-listing-price {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   color: #888;
   font-family: 'Space Mono', monospace;
