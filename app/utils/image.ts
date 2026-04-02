@@ -1,5 +1,5 @@
 const MAX_DIMENSION = 1024
-const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
+const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
 
 export function getMediaType(file: File): string {
   const map: Record<string, string> = {
@@ -19,7 +19,7 @@ export function isValidImageFile(file: File): boolean {
 export function getFileSizeError(file: File): string | null {
   if (file.size > MAX_FILE_SIZE) {
     const sizeMB = (file.size / 1024 / 1024).toFixed(1)
-    return `${file.name} fait ${sizeMB} MB (max 5 MB)`
+    return `${file.name} fait ${sizeMB} MB (max 10 MB)`
   }
   return null
 }
