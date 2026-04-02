@@ -151,27 +151,6 @@ function submitRefine() {
       </div>
     </div>
 
-    <!-- Refine -->
-    <div class="refine-box">
-      <label class="field-label">&#128295; Affiner l'annonce</label>
-      <div class="refine-row">
-        <input
-          v-model="editContext"
-          placeholder="Ex: Baisse le prix, mentionne la garantie restante..."
-          class="input refine-input"
-          @keydown.enter="submitRefine"
-        />
-        <button
-          class="refine-btn"
-          :class="{ active: editContext.trim() }"
-          :disabled="isRefining || !editContext.trim()"
-          @click="submitRefine"
-        >
-          {{ isRefining ? '...' : 'Régénérer' }}
-        </button>
-      </div>
-    </div>
-
     <!-- Divider -->
     <div class="divider" />
 
@@ -229,6 +208,27 @@ function submitRefine() {
           <span class="ai-stat-value">{{ shortModel(aiStats.model) }}</span>
           <span class="ai-stat-label">Modèle</span>
         </div>
+      </div>
+    </div>
+
+    <!-- Refine -->
+    <div class="refine-box">
+      <label class="field-label">&#128295; Affiner l'annonce</label>
+      <div class="refine-row">
+        <input
+          v-model="editContext"
+          placeholder="Ex: Baisse le prix, mentionne la garantie restante..."
+          class="input refine-input"
+          @keydown.enter="submitRefine"
+        />
+        <button
+          class="refine-btn"
+          :class="{ active: editContext.trim() }"
+          :disabled="isRefining || !editContext.trim()"
+          @click="submitRefine"
+        >
+          {{ isRefining ? '...' : 'Régénérer' }}
+        </button>
       </div>
     </div>
 

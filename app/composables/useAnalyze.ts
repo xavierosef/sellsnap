@@ -227,6 +227,35 @@ export function useAnalyze() {
     }
   }
 
+  // Debounced save of field edits to the database
+  let saveTimer: ReturnType<typeof setTimeout> | null = null
+
+  function saveFields() {
+    if (!savedListingId.value) return
+    if (saveTimer) clearTimeout(saveTimer)
+    saveTimer = setTimeout(async () => {
+      try {
+        await $fetch(`/api/listings/${savedListingId.value}`, {
+          method: 'PATCH',
+          body: {
+            title: title.value,
+            description: description.value,
+            price: price.value,
+          },
+        })
+      } catch (e) {
+        console.warn('Auto-save field edit failed:', e)
+      }
+    }, 1000)
+  }
+
+  // Watch for manual edits and auto-save
+  watch([title, description, price], () => {
+    if (step.value === 'result' && savedListingId.value && !isRefining.value) {
+      saveFields()
+    }
+  })
+
   function reset() {
     // Revoke all blob URLs
     for (const p of previews.value) {
@@ -246,12 +275,14 @@ export function useAnalyze() {
     aiStats.value = null
     market.value = null
     savedListingId.value = null
+    if (saveTimer) clearTimeout(saveTimer)
   }
 
   // Cleanup on unmount
   onUnmounted(() => {
     stopTimer()
     abortController?.abort()
+    if (saveTimer) clearTimeout(saveTimer)
     for (const p of previews.value) {
       if (p.startsWith('blob:')) URL.revokeObjectURL(p)
     }
